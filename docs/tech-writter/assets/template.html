@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{DOC_TITLE}}</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #dbeafe;
+            --bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --code-bg: #f8fafc;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --sidebar-width: 280px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Noto Sans SC", "Microsoft JhengHei", sans-serif;
+            color: var(--text);
+            line-height: 1.7;
+            display: flex;
+        }
+        /* Sidebar Navigation */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            top: 0; left: 0;
+            background: #f8fafc;
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 24px 16px;
+            z-index: 100;
+        }
+        .sidebar h2 { font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+        .sidebar a {
+            display: block; padding: 6px 12px; color: var(--text); text-decoration: none;
+            font-size: 14px; border-radius: 6px; margin-bottom: 2px; transition: all 0.2s;
+        }
+        .sidebar a:hover { background: var(--primary-light); color: var(--primary); }
+        .sidebar a.active { background: var(--primary); color: white; }
+        .sidebar .nav-group { margin-bottom: 16px; }
+        .sidebar .nav-group-title { font-weight: 600; font-size: 13px; color: var(--text-secondary); padding: 4px 12px; }
+        /* Main Content */
+        .main { margin-left: var(--sidebar-width); flex: 1; max-width: 900px; padding: 40px 60px; }
+        h1 { font-size: 2em; margin-bottom: 8px; color: var(--text); }
+        h2 { font-size: 1.5em; margin-top: 48px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary); }
+        h3 { font-size: 1.2em; margin-top: 32px; margin-bottom: 12px; }
+        .doc-meta { color: var(--text-secondary); font-size: 14px; margin-bottom: 32px; }
+        .doc-meta span { margin-right: 16px; }
+        /* API Endpoint Card */
+        .endpoint {
+            border: 1px solid var(--border); border-radius: 12px; margin: 24px 0;
+            overflow: hidden; background: var(--bg);
+        }
+        .endpoint-header {
+            display: flex; align-items: center; padding: 16px 20px;
+            background: var(--code-bg); border-bottom: 1px solid var(--border);
+        }
+        .method {
+            display: inline-block; padding: 4px 12px; border-radius: 6px;
+            font-weight: 700; font-size: 13px; color: white; margin-right: 12px;
+        }
+        .method-get { background: var(--success); }
+        .method-post { background: var(--primary); }
+        .method-put { background: var(--warning); }
+        .method-delete { background: var(--error); }
+        .method-patch { background: #8b5cf6; }
+        .endpoint-path { font-family: "SF Mono", "Fira Code", monospace; font-size: 15px; font-weight: 500; }
+        .endpoint-body { padding: 20px; }
+        .endpoint-desc { color: var(--text-secondary); margin-bottom: 16px; }
+        /* Parameter Table */
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+        th { background: var(--code-bg); text-align: left; padding: 10px 14px; font-weight: 600; border-bottom: 2px solid var(--border); }
+        td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+        .param-name { font-family: monospace; font-weight: 600; color: var(--primary); }
+        .param-type { font-family: monospace; font-size: 12px; color: var(--text-secondary); }
+        .param-required { color: var(--error); font-size: 12px; font-weight: 600; }
+        .param-optional { color: var(--text-secondary); font-size: 12px; }
+        .param-constraint { font-size: 12px; color: var(--warning); }
+        /* Code Block */
+        pre {
+            background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 10px;
+            overflow-x: auto; font-size: 13px; line-height: 1.6; margin: 16px 0;
+            font-family: "SF Mono", "Fira Code", monospace;
+        }
+        code { font-family: "SF Mono", "Fira Code", monospace; }
+        .inline-code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+        /* Tabs for Request/Response */
+        .tabs { display: flex; border-bottom: 2px solid var(--border); margin-top: 16px; }
+        .tab {
+            padding: 8px 16px; cursor: pointer; font-size: 13px; font-weight: 600;
+            color: var(--text-secondary); border-bottom: 2px solid transparent; margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-content { display: none; padding: 16px 0; }
+        .tab-content.active { display: block; }
+        /* Error Code Table */
+        .error-row td:first-child { font-family: monospace; font-weight: 600; }
+        .error-row .status-2xx { color: var(--success); }
+        .error-row .status-4xx { color: var(--warning); }
+        .error-row .status-5xx { color: var(--error); }
+        /* SVG Flow Animation */
+        .flow-container { margin: 24px 0; text-align: center; }
+        .flow-container svg { max-width: 100%; }
+        @keyframes flowDash { to { stroke-dashoffset: -20; } }
+        .flow-arrow {
+            stroke-dasharray: 10 5;
+            animation: flowDash 1s linear infinite;
+        }
+        /* Mermaid */
+        .mermaid { margin: 24px 0; text-align: center; }
+        /* Badge */
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-stable { background: #dcfce7; color: #166534; }
+        .badge-beta { background: #fef3c7; color: #92400e; }
+        .badge-deprecated { background: #fee2e2; color: #991b1b; }
+        /* Version History */
+        .version-entry { border-left: 3px solid var(--primary); padding-left: 16px; margin: 16px 0; }
+        .version-tag { font-weight: 700; color: var(--primary); }
+        .version-date { color: var(--text-secondary); font-size: 13px; margin-left: 8px; }
+        /* Auth Section */
+        .auth-box {
+            background: var(--primary-light); border: 1px solid var(--primary);
+            border-radius: 10px; padding: 20px; margin: 16px 0;
+        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; padding: 20px; }
+        }
+        /* Print */
+        @media print {
+            .sidebar { display: none; }
+            .main { margin-left: 0; max-width: 100%; }
+            pre { white-space: pre-wrap; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <h2>{{DOC_TITLE}}</h2>
+        <!-- NAV_PLACEHOLDER -->
+    </nav>
+    <main class="main">
+        <h1>{{DOC_TITLE}}</h1>
+        <div class="doc-meta">
+            <span>版本: {{VERSION}}</span>
+            <span>更新日期: {{DATE}}</span>
+            <span>作者: {{AUTHOR}}</span>
+        </div>
+        <!-- CONTENT_PLACEHOLDER -->
+    </main>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const group = tab.closest('.tabs-group');
+                group.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                group.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                group.querySelector(tab.dataset.target).classList.add('active');
+            });
+        });
+        // Sidebar active state
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+                    const link = document.querySelector(`.sidebar a[href="#${entry.target.id}"]`);
+                    if (link) link.classList.add('active');
+                }
+            });
+        }, { rootMargin: '-20% 0px -80% 0px' });
+        document.querySelectorAll('h2[id], h3[id]').forEach(h => observer.observe(h));
+    </script>
+</body>
+</html>
